@@ -1,0 +1,40 @@
+name: Python CLI tool template
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        os:
+          - ubuntu-latest
+          - macOS-latest
+        python-version:
+          - 3.7
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install
+      - name: Check Python codestyle
+        run: |
+          make style
+      - name: Run test
+        run: |
+          make test
+      - name: Run smoke test
+        run: |
+          pipenv run tool
