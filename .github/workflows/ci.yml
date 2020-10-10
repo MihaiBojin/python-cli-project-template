@@ -25,13 +25,9 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Set up a virtualenv
+      - name: Lint, Style, Test
         run: |
           make venv-init
           source $(make activate)
-      - name: Lint, Style, Test
-        run: |
           make lint test
-      - name: Smoke test
-        run: |
           tool
