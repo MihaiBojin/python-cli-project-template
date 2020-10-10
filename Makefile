@@ -1,69 +1,96 @@
+VENV := ".venv"
+PIP_VERSION := "20.2.3"
+SOURCE_CODE := "src/"
 default: usage
 
+.PHONY: activate
+activate:
+	@echo "$(VENV)/bin/activate"
+
+.PHONY: clean
 clean:
 ifdef PIPENV_ACTIVE
 	$(error Cannot clean the environment, if one is already active. 'exit' first...)
 endif
+	@echo
 	@echo "==> Cleaning working directory..."
 	@find . -name '*.egg-info' | xargs rm -rf
 	@rm -rf __pycache__ .pytest_cache
 
-devenv:
-	@echo "==> Updating the local development environment..."
-	@pipenv update
-ifndef PIPENV_ACTIVE
-	@echo "==> Activating the pipenv shell..."
-	@pipenv shell
-endif
-
-devenv-install: clean
-ifdef PIPENV_ACTIVE
-	$(error "Cannot install the environment, if one is already active. 'exit' first!")
-endif
-	@echo "==> Setting up the project for local development..."
-	@pipenv clean
-	$(MAKE) install
-	@pipenv shell
-
-install: install-pipenv
-	@echo "==> Resolving dependencies..."
-	@pipenv install --dev
-	@pipenv run pip install -e .
-
+.PHONY: install-git-hooks
 install-git-hooks:
 	@echo "==> Installing all git hooks..."
 	find .git/hooks -type l -exec rm {} \;
 	find .githooks -type f -exec ln -sf ../../{} .git/hooks/ \;
 
-install-pipenv:
-ifeq (, $(shell which pipenv))
-	@echo "==> Installing pipenv..."
-	@python -m pip install --upgrade pipenv
-endif
-
-run:
-	@pipenv run tool
-
-style:
+.PHONY: lint
+lint:
+	@echo
 	@echo "==> Formatting code..."
-	pipenv run autopep8 --in-place --aggressive --recursive .
+	autopep8 --in-place --aggressive --recursive $(SOURCE_CODE)
 
+	@echo
+	@echo "==> Linting code..."
+	pylint -j 4 --rcfile=".pylintrc" $(SOURCE_CODE)
+
+	@echo
 	@echo "==> Checking code style..."
-	pipenv run flake8 .
+	flake8 $(SOURCE_CODE)
 
+	@echo
+	@echo "==> Checking type hints..."
+	mypy $(SOURCE_CODE)
+
+.PHONY: test
 test:
 	@echo "==> Running tests..."
-	@pipenv run pytest .
+	@pytest $(SOURCE_CODE)
 
+.PHONY: upgrade-deps
+upgrade-deps:
+ifndef VIRTUAL_ENV
+	$(error Please activate a virtualenv first)
+endif
+ifeq (,$(shell command -v pip-upgrade))
+	@echo
+	@echo "==> Installing PIP upgrader"
+	@pip install pip-upgrader
+endif
+	@echo
+	@echo "==> Upgrading dependencies"
+	@echo "==> You will be prompted for which dependencies to update"
+	@echo "==> Please ensure you have activated your virtualenv, as the upgraded deps will be installed"
+	@pip-upgrade
+
+.PHONY: usage
 usage:
 	@echo "Usage:"
 	@echo "clean: Removes build artifacts from the current working directory"
-	@echo "devenv: Updates and activates the local development environment"
-	@echo "devenv-install: Sets up a local development environment"
 	@echo "install-git-hooks: Installs git hooks in the current working directory"
-	@echo "run: Runs the tool's entry point from outside the venv"
-	@echo "style: Formats the source code and then runs linting"
+	@echo "lint: Lints and formats the source code"
 	@echo "test: Runs all tests"
+	@echo "upgrade-deps: Upgrades all dependencies"
+	@echo "venv: Installs all dependencies in the current virtualenv"
 	@echo
 
-.PHONY: clean default devenv devenv-install install run style test usage
+.PHONY: venv
+venv:
+ifndef VIRTUAL_ENV
+	$(error Please activate a virtualenv first)
+endif
+	@echo
+	@echo "==> Updating all dependencies..."
+	python3 -m pip install --upgrade pip==$(PIP_VERSION)
+	python3 -m pip install -r requirements/prod.txt
+	python3 -m pip install -r requirements/dev.txt
+	python3 -m pip install -e .
+
+.PHONY: venv-init
+venv-init:
+ifdef VIRTUAL_ENV
+	$(error A virtualenv is already active; deactivate it to proceed)
+endif
+	@echo
+	echo "==> Initializing a virtual env..."
+	python3 -m venv $(VENV)
+	(. $(VENV)/bin/activate; $(MAKE) venv)

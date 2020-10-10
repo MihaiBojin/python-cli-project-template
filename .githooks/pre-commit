@@ -1,2 +1,2 @@
 $!/usr/bin/env bash
-make style test
+make lint test

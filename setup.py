@@ -1,29 +1,31 @@
 from distutils.core import setup
-
 import setuptools
-from pipenv.project import Project
-from pipenv.utils import convert_deps_to_pip
-# Load the project's README file
-from pyfiglet import figlet_format
+from src.pkg.version import __version__, __title__
 
 with open("README.md", "r", encoding='utf8') as fh:
     long_description = fh.read()
 
-# Parse the Pipfile to retrieve all deps
-# Based on this excellent example: https://github.com/pypa/pipenv/issues/209
-pipfile = Project(chdir=False).parsed_pipfile
-packages = convert_deps_to_pip(pipfile['packages'], r=False)
-dev_packages = convert_deps_to_pip(pipfile['dev-packages'], r=False)
+# Parse requirements.txt
+packages = list()
+with open('requirements/prod.txt') as fh:
+    for line in fh.readlines():
+        dep = line.strip()
+        # skip empty lines
+        if len(dep) == 0:
+            continue
 
-# Generate a header during setup and store it into a file
-output = figlet_format('Python CLI tool template', font='slant', width=127)
-with open("src/pkg/motd.txt", mode='w+') as fh:
-    fh.write(output)
+        # skip comments
+        if dep[0] == '#':
+            continue
+
+        # Extract any comments
+        parts = dep.split('#', 1)
+        packages += [parts[0]]
 
 setup(
-    name='Python CLI tool template',
-    version='0.0.1',
-    author='Mihai Bojin',
+    name=__title__,
+    version=__version__,
+    author='John Doe',
     author_email='',
     packages=setuptools.find_packages(where='src'),
     package_dir={
@@ -31,8 +33,7 @@ setup(
     },
     # https://setuptools.readthedocs.io/en/latest/setuptools.html
     package_data={
-        # If any package contains *.txt files, include them:
-        '': ['*.txt'],
+        '': ['*.txt', '*.yml', '*.json'],
     },
     scripts=[],
     entry_points={
@@ -45,7 +46,7 @@ setup(
     description='Python CLI tool template',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=packages + dev_packages,
+    install_requires=packages,
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: Apache License Version 2.0",

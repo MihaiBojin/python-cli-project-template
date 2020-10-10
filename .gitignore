@@ -109,4 +109,4 @@ venv.bak/
 .idea
 
 # Repo specific
-pkg/motd.txt
+pkg/title.txt
