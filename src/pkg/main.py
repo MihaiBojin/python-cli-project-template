@@ -23,7 +23,7 @@ def main():
 
 
 def print_header():
-    print(importlib.resources.open_text("pkg", "motd.txt").read())
+    print(importlib.resources.open_text("pkg", "title.txt").read())
 
 
 if __name__ == "__main__":
