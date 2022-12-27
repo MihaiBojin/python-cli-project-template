@@ -6,4 +6,4 @@ pyfiglet==0.8.post1
 pyinstaller==4.0
 pylint==2.6.0
 pytest==6.1.1
-setuptools==50.3.0
+setuptools==65.5.1
