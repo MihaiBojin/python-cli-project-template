@@ -3,7 +3,7 @@ flake8-isort==4.0.0
 flake8==3.8.4
 mypy==0.790
 pyfiglet==0.8.post1
-pyinstaller==4.0
+pyinstaller==5.13.1
 pylint==2.6.0
 pytest==6.1.1
 setuptools==65.5.1
